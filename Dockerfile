@@ -1,6 +1,11 @@
 FROM php:7.2-fpm
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update || true && \
+    sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list 2>/dev/null || true && \
+    sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list 2>/dev/null || true && \
+    sed -i '/jessie-updates/d' /etc/apt/sources.list 2>/dev/null || true && \
+    echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until && \
+    apt-get update && apt-get install -y \
     nginx \
     curl \
     wget \
