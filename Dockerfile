@@ -20,8 +20,8 @@ RUN mkdir -p /usr/local/lib \
     && tar -xzf ioncube_loaders_lin_x86-64.tar.gz -C /usr/local/lib ioncube/ioncube_loader_lin_8.3.so \
     && rm ioncube_loaders_lin_x86-64.tar.gz
 
-RUN echo "zend_extension=/usr/local/lib/ioncube/ioncube_loader_lin_8.3.so" > /usr/local/etc/php/conf.d/ioncube.ini \
-    && echo "allow_url_fopen=On" >> /usr/local/etc/php/conf.d/custom.ini
+RUN echo "zend_extension=/usr/local/lib/ioncube/ioncube_loader_lin_8.3.so" > /usr/local/etc/php/conf.d/00-ioncube.ini \
+    && echo "allow_url_fopen=On" >> /usr/local/etc/php/conf.d/99-custom.ini
 
 COPY default /etc/nginx/sites-available/default
 RUN rm -f /etc/nginx/sites-enabled/default && \
