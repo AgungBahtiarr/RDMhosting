@@ -1,4 +1,4 @@
-FROM php:8.3-fpm
+FROM php:7.2-fpm
 
 RUN apt-get update && apt-get install -y \
     nginx \
@@ -17,10 +17,10 @@ RUN apt-get update && apt-get install -y \
 
 RUN mkdir -p /usr/local/lib \
     && wget -q https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz \
-    && tar -xzf ioncube_loaders_lin_x86-64.tar.gz -C /usr/local/lib ioncube/ioncube_loader_lin_8.3.so \
+    && tar -xzf ioncube_loaders_lin_x86-64.tar.gz -C /usr/local/lib ioncube/ioncube_loader_lin_7.2.so \
     && rm ioncube_loaders_lin_x86-64.tar.gz
 
-RUN echo "zend_extension=/usr/local/lib/ioncube/ioncube_loader_lin_8.3.so" > /usr/local/etc/php/conf.d/00-ioncube.ini \
+RUN echo "zend_extension=/usr/local/lib/ioncube/ioncube_loader_lin_7.2.so" > /usr/local/etc/php/conf.d/00-ioncube.ini \
     && echo "allow_url_fopen=On" >> /usr/local/etc/php/conf.d/99-custom.ini
 
 COPY default /etc/nginx/sites-available/default
