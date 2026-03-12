@@ -1,4 +1,4 @@
-providers = []
+providers = ['php']
 buildImage = 'ghcr.io/railwayapp/nixpacks:ubuntu-1745885067'
 
 [variables]
