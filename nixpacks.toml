@@ -237,13 +237,10 @@ nixPkgs = [
     'nginx',
     'libmysqlclient',
     'php72Packages.composer',
-    'nodejs_18',
-    'npm-9_x',
 ]
 nixLibs = ['libmysqlclient']
-nixOverlays = ['https://github.com/railwayapp/nix-npm-overlay/archive/main.tar.gz']
-# nixpkgs commit yang masih memiliki php72 (NixOS 20.09)
-nixpkgsArchive = '2c162d49cd5b979eb66ff1653aecaeaa01690fcc'
+# nixpkgs 21.05 - ada php72, sebelum nodejs_18 dibutuhkan
+nixpkgsArchive = 'b7dad3a8f431981519a2b4e0e4be14baad7b01d4'
 
 [phases.install]
 dependsOn = ['setup']
