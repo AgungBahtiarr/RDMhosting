@@ -24,7 +24,8 @@ RUN echo "zend_extension=/usr/local/lib/ioncube/ioncube_loader_lin_8.3.so" > /us
     && echo "allow_url_fopen=On" >> /usr/local/etc/php/conf.d/custom.ini
 
 COPY default /etc/nginx/sites-available/default
-RUN ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/ && rm -f /etc/nginx/sites-enabled/default~
+RUN rm -f /etc/nginx/sites-enabled/default && \
+    ln -s /etc/nginx/sites-available/default /etc/nginx/sites-enabled/
 
 RUN mkdir -p /var/www/html /var/log/nginx /var/cache/nginx /var/run
 
