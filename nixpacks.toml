@@ -230,7 +230,7 @@ cmds = ['mkdir -p /var/log/nginx && mkdir -p /var/cache/nginx']
 
 [phases.setup]
 nixPkgs = [
-    '(php83.withExtensions (pe: pe.enabled ++ []))',
+    '(php83.withExtensions (pe: pe.enabled ++ [pe.ioncube]))',
     'nginx',
     'libmysqlclient',
     'php83Packages.composer',
