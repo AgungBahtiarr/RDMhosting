@@ -1,4 +1,4 @@
-providers = ['php']
+providers = []
 buildImage = 'ghcr.io/railwayapp/nixpacks:ubuntu-1745885067'
 
 [variables]
@@ -95,6 +95,7 @@ php_admin_value[allow_url_fopen] = 1
 "php.ini" = '''
 allow_url_fopen = On
 allow_url_include = Off
+zend_extension = /opt/ioncube/ioncube_loader_lin_8.3.so
 '''
 "scripts/config/template.mjs" = '''
 import { readFile, writeFile } from "fs/promises";
@@ -128,7 +129,7 @@ import { compileTemplate } from "./config/template.mjs";
 import { e } from "./util/cmd.mjs";
 import { checkEnvErrors, isLaravel } from "./util/laravel.mjs";
 import Logger from "./util/logger.mjs";
-import { access, constants, readFile, writeFile } from 'node:fs/promises'
+import { access, constants } from 'node:fs/promises'
 
 const prestartLogger = new Logger('prestart');
 const serverLogger = new Logger('server');
@@ -136,23 +137,6 @@ const serverLogger = new Logger('server');
 if (process.argv.length != 4) {
     prestartLogger.error(`Usage: ${process.argv[1]} <config-file> <output-file>`)
     process.exit(1);
-}
-
-// Inject ioncube zend_extension path ke php.ini secara dinamis
-try {
-    const ioncubeSo = e(`find /nix/store -name "ioncube_loader_lin_8.3.so" 2>/dev/null | head -1`);
-    const phpIniContent = await readFile('/assets/php.ini', { encoding: 'utf8' });
-
-    if (ioncubeSo) {
-        const updated = phpIniContent + `\nzend_extension = ${ioncubeSo}\n`;
-        await writeFile('/php.ini', updated, { encoding: 'utf8' });
-        prestartLogger.info(`IonCube loaded from: ${ioncubeSo}`);
-    } else {
-        prestartLogger.warn('ioncube_loader_lin_8.3.so not found! Running without IonCube.');
-        await writeFile('/php.ini', phpIniContent, { encoding: 'utf8' });
-    }
-} catch (err) {
-    prestartLogger.error(`Failed to configure IonCube: ${err}`);
 }
 
 await Promise.all([
@@ -247,13 +231,9 @@ import { e } from "./cmd.mjs";
 export const getNixPath = (exe) => e(`nix-store -q ${e(`which ${exe}`)}`);
 '''
 
-[phases.install]
-dependsOn = ['setup']
-cmds = ['mkdir -p /var/log/nginx && mkdir -p /var/cache/nginx']
-
 [phases.setup]
 nixPkgs = [
-    '(php83.withExtensions (pe: pe.enabled ++ [pe.ioncube-loader]))',
+    'php83',
     'nginx',
     'libmysqlclient',
     'php83Packages.composer',
@@ -264,5 +244,16 @@ nixLibs = ['libmysqlclient']
 nixOverlays = ['https://github.com/railwayapp/nix-npm-overlay/archive/main.tar.gz']
 nixpkgsArchive = 'e24b4c09e963677b1beea49d411cd315a024ad3a'
 
+[phases.install]
+dependsOn = ['setup']
+cmds = [
+    'mkdir -p /var/log/nginx && mkdir -p /var/cache/nginx',
+    'mkdir -p /opt/ioncube',
+    'curl -fsSL https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz -o /tmp/ioncube.tar.gz',
+    'tar -xzf /tmp/ioncube.tar.gz -C /tmp',
+    'cp /tmp/ioncube/ioncube_loader_lin_8.3.so /opt/ioncube/',
+    'rm -rf /tmp/ioncube.tar.gz /tmp/ioncube',
+]
+
 [start]
-cmd = 'node /assets/scripts/prestart.mjs /assets/nginx.template.conf /nginx.conf && (php-fpm -y /assets/php-fpm.conf -c /php.ini & nginx -c /nginx.conf)'
+cmd = 'node /assets/scripts/prestart.mjs /assets/nginx.template.conf /nginx.conf && (php-fpm -y /assets/php-fpm.conf -c /assets/php.ini & nginx -c /nginx.conf)'
