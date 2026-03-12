@@ -17,7 +17,7 @@ events {
 }
 
 http {
-    include    $!{nginx}/conf/mime.types;
+    include    /etc/nginx/mime.types;
     index    index.html index.htm index.php;
 
     default_type application/octet-stream;
@@ -28,7 +28,7 @@ http {
     error_log /dev/stdout;
     sendfile     on;
     tcp_nopush   on;
-    server_names_hash_bucket_size 128; # this seems to be required for some vhosts
+    server_names_hash_bucket_size 128;
 
     server {
         listen ${PORT};
@@ -71,7 +71,6 @@ http {
             fastcgi_pass 127.0.0.1:9000;
             fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
             include /etc/nginx/fastcgi_params;
-            fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         }
 
         location ~ /\.(?!well-known).* {
@@ -102,12 +101,10 @@ import { readFile, writeFile } from "fs/promises";
 
 const replaceStr = input =>
     input
-        // If statements
         .replaceAll(/\$if\s*\((\w+)\)\s*\(([^]*?)\)\s*else\s*\(([^]*?)\)/gm,
             (_all, condition, value, otherwise) =>
                 process.env[condition] ? replaceStr(value) : replaceStr(otherwise)
         )
-        // Variables
         .replaceAll(/\${(\w+)}/g,
             (_all, name) => process.env[name]
         )
@@ -163,7 +160,6 @@ function checkVariable(name) {
         let hint =
             `Your app configuration references the ${name} environment variable, but it is not set.`
             + (variableHints[name] ?? '');
-
         logger.warn(hint);
     }
 }
@@ -184,64 +180,52 @@ export async function checkEnvErrors(srcdir) {
     }
 
     if (!process.env.APP_KEY) {
-        logger.warn('Your app key is not set! Please set a random 32-character string in your APP_KEY environment variable. This can be easily generated with `openssl rand -hex 16`.');
+        logger.warn('Your app key is not set! Please set a random 32-character string in your APP_KEY environment variable.');
     }
 }
 '''
 "scripts/util/logger.mjs" = '''
 export default class Logger {
-    /** @type string */
     #tag;
-
-    /**
-    * @param {string} tag
-    */
-    constructor(tag) {
-        this.#tag = tag
-    }
+    constructor(tag) { this.#tag = tag }
 
     #log(color, messageType, message, fn = console.log) {
         fn(`\x1b[${color}m[${this.#tag}:${messageType}]\x1b[0m ${message}`)
     }
 
-    info(message) {
-        this.#log(34, 'info', message)
-    }
-
-    warn(message) {
-        this.#log(35, 'warn', message, console.warn)
-    }
-
-    error(message) {
-        this.#log(31, 'error', message, console.error)
-    }
+    info(message)  { this.#log(34, 'info',  message) }
+    warn(message)  { this.#log(35, 'warn',  message, console.warn) }
+    error(message) { this.#log(31, 'error', message, console.error) }
 }
 '''
 
 [phases.setup]
-nixPkgs = ['nginx']
+nixPkgs = []
 nixpkgsArchive = 'e24b4c09e963677b1beea49d411cd315a024ad3a'
 
 [phases.install]
 dependsOn = ['setup']
 cmds = [
-    # Install PHP 7.2 via ondrej/php PPA (mendukung Ubuntu 18.04+)
+    # Install Node.js 18 via NodeSource
+    'curl -fsSL https://deb.nodesource.com/setup_18.x | bash -',
+    'apt-get install -y nodejs',
+    # Install nginx
+    'apt-get install -y nginx',
+    # Install PHP 7.2 via ondrej/php PPA
     'apt-get install -y software-properties-common gnupg2',
     'add-apt-repository -y ppa:ondrej/php',
     'apt-get update',
     'apt-get install -y php7.2 php7.2-fpm php7.2-cli php7.2-mysql php7.2-mbstring php7.2-xml php7.2-curl php7.2-zip',
     # Install Composer
     'curl -sS https://getcomposer.org/installer | php7.2 -- --install-dir=/usr/local/bin --filename=composer',
-    # Buat symlink php ke php7.2
-    'ln -sf /usr/bin/php7.2 /usr/local/bin/php',
-    # Download dan install IonCube loader untuk PHP 7.2
+    # Install IonCube loader untuk PHP 7.2
     'mkdir -p /opt/ioncube',
     'curl -fsSL https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz -o /tmp/ioncube.tar.gz',
     'tar -xzf /tmp/ioncube.tar.gz -C /tmp',
     'cp /tmp/ioncube/ioncube_loader_lin_7.2.so /opt/ioncube/',
     'rm -rf /tmp/ioncube.tar.gz /tmp/ioncube',
-    # Buat direktori nginx yang dibutuhkan
-    'mkdir -p /var/log/nginx && mkdir -p /var/cache/nginx',
+    # Buat direktori yang dibutuhkan
+    'mkdir -p /var/log/nginx /var/cache/nginx',
 ]
 
 [start]
