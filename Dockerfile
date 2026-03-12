@@ -11,7 +11,6 @@ RUN apt-get update && apt-get install -y \
     libjpeg-dev \
     libfreetype6-dev \
     libmariadb-dev \
-    supervisor \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install pdo pdo_mysql zip gd
 
@@ -24,15 +23,16 @@ RUN echo "zend_extension=/usr/local/lib/ioncube/ioncube_loader_lin_8.3.so" > /us
     && echo "allow_url_fopen=On" >> /usr/local/etc/php/conf.d/custom.ini
 
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-RUN mkdir -p /var/www/html /var/log/nginx /var/cache/nginx /var/run
-
-COPY --chown=www-data:www-data . /var/www/html
+RUN mkdir -p /var/www/html /var/log/nginx /var/cache/nginx /var/run \
+    && touch /var/run/nginx.pid \
+    && chown -R www-data:www-data /var/www/html
 
 RUN chmod -R 755 /var/www/html && \
     chmod -R 777 /var/www/html/application/cache /var/www/html/application/logs 2>/dev/null || true
 
+COPY --chown=www-data:www-data . /var/www/html
+
 EXPOSE 80
 
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD php-fpm & nginx -g "daemon off;"
