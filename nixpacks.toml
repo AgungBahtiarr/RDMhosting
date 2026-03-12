@@ -95,7 +95,7 @@ php_admin_value[allow_url_fopen] = 1
 "php.ini" = '''
 allow_url_fopen = On
 allow_url_include = Off
-zend_extension = /opt/ioncube/ioncube_loader_lin_8.3.so
+zend_extension = /opt/ioncube/ioncube_loader_lin_7.2.so
 '''
 "scripts/config/template.mjs" = '''
 import { readFile, writeFile } from "fs/promises";
@@ -233,16 +233,17 @@ export const getNixPath = (exe) => e(`nix-store -q ${e(`which ${exe}`)}`);
 
 [phases.setup]
 nixPkgs = [
-    'php83',
+    'php72',
     'nginx',
     'libmysqlclient',
-    'php83Packages.composer',
+    'php72Packages.composer',
     'nodejs_18',
     'npm-9_x',
 ]
 nixLibs = ['libmysqlclient']
 nixOverlays = ['https://github.com/railwayapp/nix-npm-overlay/archive/main.tar.gz']
-nixpkgsArchive = 'e24b4c09e963677b1beea49d411cd315a024ad3a'
+# nixpkgs commit yang masih memiliki php72 (NixOS 20.09)
+nixpkgsArchive = '2c162d49cd5b979eb66ff1653aecaeaa01690fcc'
 
 [phases.install]
 dependsOn = ['setup']
@@ -251,7 +252,7 @@ cmds = [
     'mkdir -p /opt/ioncube',
     'curl -fsSL https://downloads.ioncube.com/loader_downloads/ioncube_loaders_lin_x86-64.tar.gz -o /tmp/ioncube.tar.gz',
     'tar -xzf /tmp/ioncube.tar.gz -C /tmp',
-    'cp /tmp/ioncube/ioncube_loader_lin_8.3.so /opt/ioncube/',
+    'cp /tmp/ioncube/ioncube_loader_lin_7.2.so /opt/ioncube/',
     'rm -rf /tmp/ioncube.tar.gz /tmp/ioncube',
 ]
 
